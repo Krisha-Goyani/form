@@ -128,8 +128,8 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
             params.append('profileImage', e.target.result);
             
             // Method 1: Using location.assign()
-            // location.assign('./preview/index.html?' + params.toString());
-            location.assign('https://stalwart-sprinkles-9369f8.netlify.app/preview/index.html?' + params.toString());
+            location.assign('./preview/index.html?' + params.toString());
+            // location.assign('https://stalwart-sprinkles-9369f8.netlify.app/preview/index.html?' + params.toString());
             
             // Method 2: Using history.pushState() and programmatic navigation
             // history.pushState({}, '', './preview.html?' + params.toString());
