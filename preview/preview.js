@@ -1,14 +1,106 @@
-// Get form data from URL parameters
-const urlParams = new URLSearchParams(window.location.search);
-let formData = {
-    firstName: urlParams.get('firstName'),
-    lastName: urlParams.get('lastName'),
-    email: urlParams.get('email'),
-    phone: urlParams.get('phone'),
-    gender: urlParams.get('gender'),
-    education: urlParams.get('education'),
-    profileImage: urlParams.get('profileImage')
-};
+// Initialize preview page
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Get stored form data
+        const storedData = sessionStorage.getItem('formData');
+        const profileImage = sessionStorage.getItem('profileImage');
+        
+        if (!storedData) {
+            showEmptyState();
+            return;
+        }
+
+        const formData = JSON.parse(storedData);
+        
+        // Add profile image to form data if exists
+        if (profileImage) {
+            formData.profileImage = profileImage;
+        }
+
+        createPreviewCard(formData);
+    } catch (error) {
+        console.error('Error initializing preview:', error);
+        showEmptyState();
+    }
+});
+
+function createPreviewCard(formData) {
+    const previewCard = document.createElement('div');
+    previewCard.className = 'preview-card';
+    previewCard.draggable = true;
+
+    previewCard.innerHTML = `
+        ${formData.profileImage ? 
+            `<img src="${formData.profileImage}" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">` :
+            `<div class="avatar-placeholder">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="35" r="25" fill="#B2EBF2"/>
+                    <path d="M50 65c-25 0-40 15-40 35h80c0-20-15-35-40-35z" fill="#B2EBF2"/>
+                </svg>
+            </div>`
+        }
+        <div class="preview-field">
+            <strong>Name:</strong> ${formData.firstName || ''} ${formData.lastName || ''}
+        </div>
+        <div class="preview-field">
+            <strong>Email:</strong> ${formData.email || ''}
+        </div>
+        <div class="preview-field">
+            <strong>Phone Number:</strong> ${formData.phone || ''}
+        </div>
+        <div class="preview-field">
+            <strong>Gender:</strong> ${formData.gender || ''}
+        </div>
+        <div class="preview-field">
+            <strong>Educational Qualification:</strong> ${formData.education || ''}
+        </div>
+        <div class="button-group">
+            <button class="edit-btn" onclick="toggleEdit(this)">Edit</button>
+        </div>
+    `;
+
+    document.getElementById('previewArea').innerHTML = '';
+    document.getElementById('previewArea').appendChild(previewCard);
+}
+
+function toggleEdit(btn) {
+    try {
+        // Get current form data
+        const formData = JSON.parse(sessionStorage.getItem('formData'));
+        const profileImage = sessionStorage.getItem('profileImage');
+
+        // Add edit flag
+        sessionStorage.setItem('isEditing', 'true');
+        
+        // Redirect to form page
+        window.location.href = '../index.html';
+    } catch (error) {
+        console.error('Error during edit:', error);
+        window.location.href = '../index.html';
+    }
+}
+
+// Clean up when leaving preview page
+window.addEventListener('beforeunload', function() {
+    if (!document.location.href.includes('preview')) {
+        sessionStorage.removeItem('formData');
+        sessionStorage.removeItem('profileImage');
+        sessionStorage.removeItem('isEditing');
+    }
+});
+
+function showEmptyState() {
+    document.getElementById('previewArea').innerHTML = `
+        <div class="empty-state">
+            <svg viewBox="0 0 100 100">
+                <rect x="20" y="20" width="60" height="60" fill="none" stroke="#ccc" stroke-width="2"/>
+                <line x1="20" y1="20" x2="80" y2="80" stroke="#ccc" stroke-width="2"/>
+                <line x1="80" y1="20" x2="20" y2="80" stroke="#ccc" stroke-width="2"/>
+            </svg>
+            <p>No data available</p>
+        </div>
+    `;
+}
 
 // Create preview card
 function createPreviewCard() {
@@ -95,24 +187,6 @@ function updatePreviewCard(card) {
             </div>
         </div>
     `;
-}
-
-function toggleEdit(btn) {
-    // Get the current form data
-    const params = new URLSearchParams();
-    
-    // Add all form data to URL parameters
-    Object.entries(formData).forEach(([key, value]) => {
-        if (value) {
-            params.append(key, value);
-        }
-    });
-    
-    // Add an edit flag to indicate we're in edit mode
-    params.append('isEditing', 'true');
-    
-    // Redirect back to the form page with the data
-    window.location.href = '../index.html?' + params.toString();
 }
 
 function createDeleteItems() {
@@ -232,104 +306,4 @@ deleteArea.addEventListener('drop', (e) => {
     deleteArea.classList.remove('drag-over');
     document.querySelector('.preview-card')?.classList.remove('dragging');
     createDeleteItems();
-});
-
-// Initialize the page
-createPreviewCard();
-
-// Empty state
-function showEmptyState() {
-    document.getElementById('previewArea').innerHTML = `
-        <div class="preview-card">
-            <div class="avatar-placeholder">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="35" r="25" fill="#B2EBF2"/>
-                    <path d="M50 65c-25 0-40 15-40 35h80c0-20-15-35-40-35z" fill="#B2EBF2"/>
-                </svg>
-            </div>
-            <div class="preview-field" data-field="name">
-                <div class="field-row">
-                    <strong>Name:</strong> 
-                    <span class="field-value"></span>
-                    <div class="edit-inline" style="display: none;">
-                        <input type="text" class="firstName" placeholder="First Name">
-                        <input type="text" class="lastName" placeholder="Last Name">
-                    </div>
-                </div>
-            </div>
-            <div class="preview-field" data-field="email">
-                <div class="field-row">
-                    <strong>Email:</strong> 
-                    <span class="field-value"></span>
-                    <div class="edit-inline" style="display: none;">
-                        <input type="email" placeholder="Email">
-                    </div>
-                </div>
-            </div>
-            <div class="preview-field" data-field="phone">
-                <div class="field-row">
-                    <strong>Phone Number:</strong> 
-                    <span class="field-value"></span>
-                    <div class="edit-inline" style="display: none;">
-                        <input type="tel" placeholder="Phone">
-                    </div>
-                </div>
-            </div>
-            <div class="preview-field" data-field="gender">
-                <div class="field-row">
-                    <strong>Gender:</strong> 
-                    <span class="field-value"></span>
-                    <div class="edit-inline" style="display: none;">
-                        <select>
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="preview-field" data-field="education">
-                <div class="field-row">
-                    <strong>Educational Qualification:</strong> 
-                    <span class="field-value"></span>
-                    <div class="edit-inline" style="display: none;">
-                        <select>
-                            <option value="">Select Education</option>
-                            <option value="12th">12th</option>
-                            <option value="Bachelor">Bachelor</option>
-                            <option value="Master">Master</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="button-group">
-                <button class="edit-btn" onclick="toggleEdit(this)">Edit</button>
-                <div class="save-cancel-btns" style="display: none;">
-                    <button class="save-btn" onclick="saveChanges(this)">Save</button>
-                    <button class="cancel-btn" onclick="cancelEdit(this)">Cancel</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Empty state for delete area
-    document.getElementById('deleteArea').innerHTML = `
-        <div class="empty-state">
-            <div class="document-icon">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <g fill="none" stroke="#ccc" stroke-width="2">
-                        <rect x="25" y="10" width="40" height="50"/>
-                        <rect x="35" y="20" width="40" height="50"/>
-                    </g>
-                    <g fill="#ccc">
-                        <rect x="45" y="35" width="20" height="2"/>
-                        <rect x="45" y="45" width="20" height="2"/>
-                        <rect x="45" y="55" width="20" height="2"/>
-                    </g>
-                </svg>
-            </div>
-            <p>Drag items here to delete</p>
-        </div>
-    `;
-} 
+}); 

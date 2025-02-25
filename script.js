@@ -178,93 +178,71 @@ styleSheet.textContent = `
 `;
 document.head.appendChild(styleSheet);
 
-// Add form submission handler
-document.getElementById('userForm').addEventListener('submit', function(e) {
+// Form submission handler
+document.getElementById('userForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Validate all fields first
     const fields = ['firstName', 'lastName', 'email', 'phone', 'gender', 'education', 'profileImage'];
     let isValid = true;
 
-    // Check each field's validation
-    fields.forEach(fieldName => {
-        const input = document.querySelector(`[name="${fieldName}"]`);
+    fields.forEach(field => {
+        const input = document.querySelector(`[name="${field}"]`);
         if (input) {
-            validateField(input);
-            
-            // Check if the field is valid
-            switch(fieldName) {
-                case 'gender':
-                    if (!document.querySelector('input[name="gender"]:checked')) {
-                        isValid = false;
-                    }
-                    break;
-                case 'education':
-                    if (!input.value || input.value === 'Select Degree') {
-                        isValid = false;
-                    }
-                    break;
-                case 'profileImage':
-                    if (!input.files.length) {
-                        isValid = false;
-                    }
-                    break;
-                default:
-                    // For text inputs, check if they have the invalid class
-                    if (input.classList.contains('invalid') || !input.value.trim()) {
-                        isValid = false;
-                    }
+            if (!validateField(input)) {
+                isValid = false;
             }
         }
     });
 
-    // Check for any error messages
-    const errorMessages = document.querySelectorAll('.error-text');
-    errorMessages.forEach(errorElement => {
-        if (errorElement.textContent.trim() !== '') {
-            isValid = false;
-        }
-    });
-
-    // If any validation failed, prevent form submission
     if (!isValid) {
-        // Optionally scroll to the first error
-        const firstError = document.querySelector('.invalid') || document.querySelector('.error-text:not(:empty)');
-        if (firstError) {
-            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
         return false;
     }
 
-    // If all validations pass, proceed with form submission
-    const formData = new FormData(this);
-    const params = new URLSearchParams();
+    try {
+        // Create form data object
+        const formDataObj = {
+            firstName: this.firstName.value || '',
+            lastName: this.lastName.value || '',
+            email: this.email.value || '',
+            phone: phoneInput.getNumber() || '',
+            gender: document.querySelector('input[name="gender"]:checked')?.value || '',
+            education: this.education.value || ''
+        };
 
-    // Add form data to URL parameters
-    for (const [key, value] of formData.entries()) {
-        if (key === 'profileImage') {
-            // Handle profile image
-            const file = value;
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    params.append('profileImage', e.target.result);
-                    // Redirect to preview page after image is processed
-                    window.location.href = './preview/index.html?' + params.toString();
-                };
-                reader.readAsDataURL(file);
-                return; // Exit here as we'll redirect after image is processed
-            }
-        } else {
-            params.append(key, value);
+        // Handle profile image
+        const profileImageInput = this.profileImage;
+        const existingImageInput = document.querySelector('input[name="existingProfileImage"]');
+
+        if (profileImageInput.files.length > 0) {
+            // New image selected
+            const file = profileImageInput.files[0];
+            const base64Image = await convertFileToBase64(file);
+            sessionStorage.setItem('profileImage', base64Image);
+        } else if (existingImageInput?.value) {
+            // Use existing image
+            sessionStorage.setItem('profileImage', existingImageInput.value);
         }
-    }
 
-    // If no image, redirect immediately
-    if (!formData.get('profileImage')) {
-        window.location.href = './preview/index.html?' + params.toString();
+        // Store form data in sessionStorage
+        sessionStorage.setItem('formData', JSON.stringify(formDataObj));
+        
+        // Redirect to preview page
+        window.location.href = './preview/index.html';
+    } catch (error) {
+        console.error('Error processing form:', error);
     }
 });
+
+// Helper function to convert file to base64
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
 
 // Add image preview functionality
 document.getElementById('profileImage').addEventListener('change', function(e) {
