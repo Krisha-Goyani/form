@@ -98,60 +98,21 @@ function updatePreviewCard(card) {
 }
 
 function toggleEdit(btn) {
-    const card = btn.closest('.preview-card');
-    const editInlines = card.querySelectorAll('.edit-inline');
-    const fieldValues = card.querySelectorAll('.field-value');
-    const saveCancelBtns = card.querySelector('.save-cancel-btns');
+    // Get the current form data
+    const params = new URLSearchParams();
     
-    editInlines.forEach(edit => {
-        edit.style.display = 'block';
-        // Pre-fill existing values if any
-        const field = edit.closest('.preview-field').dataset.field;
-        if (field === 'name') {
-            edit.querySelector('.firstName').value = formData.firstName || '';
-            edit.querySelector('.lastName').value = formData.lastName || '';
-        } else {
-            const input = edit.querySelector('input, select');
-            if (input) {
-                input.value = formData[field] || '';
-            }
+    // Add all form data to URL parameters
+    Object.entries(formData).forEach(([key, value]) => {
+        if (value) {
+            params.append(key, value);
         }
     });
     
-    fieldValues.forEach(value => value.style.display = 'none');
-    btn.style.display = 'none';
-    saveCancelBtns.style.display = 'block';
-}
-
-function saveChanges(btn) {
-    const card = btn.closest('.preview-card');
+    // Add an edit flag to indicate we're in edit mode
+    params.append('isEditing', 'true');
     
-    // Update formData with new values
-    formData.firstName = card.querySelector('.firstName').value;
-    formData.lastName = card.querySelector('.lastName').value;
-    formData.email = card.querySelector('[type="email"]').value;
-    formData.phone = card.querySelector('[type="tel"]').value;
-    formData.gender = card.querySelector('[data-field="gender"] select').value;
-    formData.education = card.querySelector('[data-field="education"] select').value;
-
-    // Update the display
-    updatePreviewCard(card);
-
-    // Create delete items if any field has data
-    if (Object.values(formData).some(value => value)) {
-        createDeleteItems();
-    }
-}
-
-function cancelEdit(btn) {
-    const card = btn.closest('.preview-card');
-    if (Object.values(formData).every(value => !value)) {
-        // If no data, maintain empty state
-        showEmptyState();
-    } else {
-        // If has data, revert to current values
-        updatePreviewCard(card);
-    }
+    // Redirect back to the form page with the data
+    window.location.href = '../index.html?' + params.toString();
 }
 
 function createDeleteItems() {

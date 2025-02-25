@@ -6,13 +6,11 @@ const phoneInput = window.intlTelInput(document.querySelector("#phone"), {
     geoIpLookup: null
 });
 
-// Add this after your existing phone input initialization
+// Add input event listener for real-time validation
 document.getElementById('userForm').addEventListener('input', function(e) {
     const input = e.target;
-    // Only validate if the field has been touched
-    if (input.dataset.touched) {
-        validateField(input);
-    }
+    // Always validate on input, regardless of touched state
+    validateField(input);
 });
 
 // Add blur event to mark fields as touched
@@ -24,132 +22,247 @@ document.getElementById('userForm').addEventListener('blur', function(e) {
 
 function validateField(input) {
     let isValid = true;
+    let errorMessage = '';
 
     switch(input.name) {
         case 'firstName':
         case 'lastName':
-            isValid = input.value.trim() !== '';
+            const nameRegex = /^[a-zA-Z]+$/;
+            isValid = nameRegex.test(input.value.trim());
+            errorMessage = 'Only characters allowed from a-z and A-Z';
             break;
         case 'email':
-            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
+            // More comprehensive email validation
+            const emailRegex = /^(?=[a-zA-Z0-9@._%+-]{6,254}$)[a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]{1,63}\.){1,8}[a-zA-Z]{2,63}$/;
+            
+            if (input.value.trim() === '') {
+                isValid = false;
+                errorMessage = 'Email address is required';
+            } else if (!input.value.includes('@')) {
+                isValid = false;
+                errorMessage = 'Email must contain @ symbol';
+            } else if (!input.value.includes('.')) {
+                isValid = false;
+                errorMessage = 'Email must contain a valid domain';
+            } else if (!emailRegex.test(input.value.trim())) {
+                isValid = false;
+                errorMessage = 'Please enter a valid email address (e.g., example@domain.com)';
+            }
             break;
         case 'phone':
             isValid = phoneInput.isValidNumber();
+            errorMessage = 'Please enter a valid phone number';
             break;
         case 'gender':
             const genderGroup = document.querySelector('.gender-group');
             isValid = document.querySelector('input[name="gender"]:checked');
-            if (genderGroup.dataset.touched) {
+            errorMessage = 'Please select a gender';
+            if (input.closest('.gender-group')) {
                 genderGroup.classList.toggle('valid', isValid);
                 genderGroup.classList.toggle('invalid', !isValid);
+                const errorElement = genderGroup.nextElementSibling;
+                if (errorElement && errorElement.classList.contains('error-text')) {
+                    errorElement.textContent = isValid ? '' : errorMessage;
+                }
             }
-            return;
+            return isValid;
         case 'education':
-            isValid = input.value !== '';
-            break;
+            isValid = input.value !== '' && input.value !== 'Select Degree';
+            errorMessage = 'You have to choose one field';
+            input.classList.toggle('valid', isValid);
+            input.classList.toggle('invalid', !isValid);
+            const educationError = input.nextElementSibling;
+            if (educationError && educationError.classList.contains('error-text')) {
+                educationError.textContent = !isValid ? errorMessage : '';
+            }
+            return isValid;
         case 'profileImage':
             isValid = input.files.length > 0;
-            break;
+            errorMessage = 'Please select a profile image';
+            const imageContainer = input.closest('.image-input-container');
+            imageContainer.classList.toggle('valid', isValid);
+            imageContainer.classList.toggle('invalid', !isValid);
+            const imageError = imageContainer.nextElementSibling;
+            if (imageError && imageError.classList.contains('error-text')) {
+                imageError.textContent = !isValid ? errorMessage : '';
+            }
+            return isValid;
     }
 
-    if (input.dataset.touched) {
-        input.classList.toggle('valid', isValid);
-        input.classList.toggle('invalid', !isValid);
+    // Update visual feedback
+    input.classList.toggle('valid', isValid && input.value.length > 0);
+    input.classList.toggle('invalid', !isValid && input.value.length > 0);
+    
+    // Show error message
+    const errorElement = input.nextElementSibling;
+    if (errorElement && errorElement.classList.contains('error-text')) {
+        errorElement.textContent = (!isValid && input.value.length > 0) ? errorMessage : '';
     }
+
+    return isValid;
 }
 
-// Form validation and submission
+// Add this CSS to your style.css file or update existing styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    input, select {
+        border: 1px solid #ccc;
+        outline: none;
+        transition: border-color 0.2s ease-in-out;
+    }
+
+    input.valid, select.valid {
+        border: 2px solid #28a745 !important;
+    }
+
+    input.invalid, select.invalid {
+        border: 2px solid #dc3545 !important;
+    }
+
+    .error-text {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        min-height: 1.25rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Remove default border styles */
+    input:focus, select:focus {
+        border-color: inherit;
+        box-shadow: none;
+    }
+
+    .gender-group.valid {
+        border: 2px solid #28a745;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    .gender-group.invalid {
+        border: 2px solid #dc3545;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    .image-input-container {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 4px;
+        transition: border-color 0.2s ease-in-out;
+    }
+
+    .image-input-container.valid {
+        border: 2px solid #28a745 !important;
+    }
+
+    .image-input-container.invalid {
+        border: 2px solid #dc3545 !important;
+    }
+
+    select {
+        border: 1px solid #ccc;
+        padding: 8px;
+        border-radius: 4px;
+        width: 100%;
+        transition: border-color 0.2s ease-in-out;
+    }
+
+    select.valid {
+        border: 2px solid #28a745 !important;
+    }
+
+    select.invalid {
+        border: 2px solid #dc3545 !important;
+    }
+`;
+document.head.appendChild(styleSheet);
+
+// Add form submission handler
 document.getElementById('userForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Mark all fields as touched on submit
+    // Validate all fields first
     const fields = ['firstName', 'lastName', 'email', 'phone', 'gender', 'education', 'profileImage'];
-    fields.forEach(field => {
-        const input = document.querySelector(`[name="${field}"]`);
+    let isValid = true;
+
+    // Check each field's validation
+    fields.forEach(fieldName => {
+        const input = document.querySelector(`[name="${fieldName}"]`);
         if (input) {
-            input.dataset.touched = 'true';
             validateField(input);
+            
+            // Check if the field is valid
+            switch(fieldName) {
+                case 'gender':
+                    if (!document.querySelector('input[name="gender"]:checked')) {
+                        isValid = false;
+                    }
+                    break;
+                case 'education':
+                    if (!input.value || input.value === 'Select Degree') {
+                        isValid = false;
+                    }
+                    break;
+                case 'profileImage':
+                    if (!input.files.length) {
+                        isValid = false;
+                    }
+                    break;
+                default:
+                    // For text inputs, check if they have the invalid class
+                    if (input.classList.contains('invalid') || !input.value.trim()) {
+                        isValid = false;
+                    }
+            }
         }
     });
-    
-    // Reset error messages
-    document.querySelectorAll('.error-text').forEach(error => error.textContent = '');
-    
-    let isValid = true;
+
+    // Check for any error messages
+    const errorMessages = document.querySelectorAll('.error-text');
+    errorMessages.forEach(errorElement => {
+        if (errorElement.textContent.trim() !== '') {
+            isValid = false;
+        }
+    });
+
+    // If any validation failed, prevent form submission
+    if (!isValid) {
+        // Optionally scroll to the first error
+        const firstError = document.querySelector('.invalid') || document.querySelector('.error-text:not(:empty)');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return false;
+    }
+
+    // If all validations pass, proceed with form submission
     const formData = new FormData(this);
-    
-    // Validate each field
-    if (!formData.get('firstName').trim()) {
-        document.querySelector('[name="firstName"]').nextElementSibling.textContent = 'First name is required';
-        isValid = false;
+    const params = new URLSearchParams();
+
+    // Add form data to URL parameters
+    for (const [key, value] of formData.entries()) {
+        if (key === 'profileImage') {
+            // Handle profile image
+            const file = value;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    params.append('profileImage', e.target.result);
+                    // Redirect to preview page after image is processed
+                    window.location.href = './preview/index.html?' + params.toString();
+                };
+                reader.readAsDataURL(file);
+                return; // Exit here as we'll redirect after image is processed
+            }
+        } else {
+            params.append(key, value);
+        }
     }
-    
-    if (!formData.get('lastName').trim()) {
-        document.querySelector('[name="lastName"]').nextElementSibling.textContent = 'Last name is required';
-        isValid = false;
-    }
-    
-    if (!formData.get('email').trim()) {
-        document.querySelector('[name="email"]').nextElementSibling.textContent = 'Email is required';
-        isValid = false;
-    }
-    
-    if (!phoneInput.getNumber()) {
-        document.querySelector('#phone').nextElementSibling.textContent = 'Phone number is required';
-        isValid = false;
-    }
-    
-    if (!formData.get('gender')) {
-        document.querySelector('.gender-group').nextElementSibling.textContent = 'Please select a gender';
-        isValid = false;
-    }
-    
-    if (!formData.get('education')) {
-        document.querySelector('#education').nextElementSibling.textContent = 'Please select a degree';
-        isValid = false;
-    }
-    
-    const profileImage = document.querySelector('#profileImage').files[0];
-    if (!profileImage) {
-        document.querySelector('#profileImage').nextElementSibling.nextElementSibling.textContent = 'Please select a profile image';
-        isValid = false;
-    }
-    
-    if (isValid) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const params = new URLSearchParams();
-            params.append('firstName', formData.get('firstName'));
-            params.append('lastName', formData.get('lastName'));
-            params.append('email', formData.get('email'));
-            params.append('phone', phoneInput.getNumber());
-            params.append('gender', formData.get('gender'));
-            params.append('education', formData.get('education'));
-            params.append('profileImage', e.target.result);
-            
-            // Method 1: Using location.assign()
-            location.assign('./preview/index.html?' + params.toString());
-            // location.assign('https://stalwart-sprinkles-9369f8.netlify.app/preview/index.html?' + params.toString());
-            
-            // Method 2: Using history.pushState() and programmatic navigation
-            // history.pushState({}, '', './preview.html?' + params.toString());
-            // window.dispatchEvent(new PopStateEvent('popstate'));
-            
-            // Method 3: Using a form submission
-            // const form = document.createElement('form');
-            // form.method = 'GET';
-            // form.action = './preview.html';
-            // for (const [key, value] of params) {
-            //     const input = document.createElement('input');
-            //     input.type = 'hidden';
-            //     input.name = key;
-            //     input.value = value;
-            //     form.appendChild(input);
-            // }
-            // document.body.appendChild(form);
-            // form.submit();
-        };
-        reader.readAsDataURL(profileImage);
+
+    // If no image, redirect immediately
+    if (!formData.get('profileImage')) {
+        window.location.href = './preview/index.html?' + params.toString();
     }
 });
 
@@ -383,5 +496,42 @@ document.getElementById('userForm').addEventListener('reset', function() {
     });
     document.querySelector('.gender-group').classList.remove('valid', 'invalid');
     delete document.querySelector('.gender-group').dataset.touched;
+});
+
+// Add this at the beginning of the file
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're in edit mode
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('isEditing') === 'true') {
+        // Populate form with data from URL parameters
+        const form = document.getElementById('userForm');
+        
+        // Set text inputs
+        form.firstName.value = urlParams.get('firstName') || '';
+        form.lastName.value = urlParams.get('lastName') || '';
+        form.email.value = urlParams.get('email') || '';
+        
+        // Set phone input
+        if (urlParams.get('phone')) {
+            phoneInput.setNumber(urlParams.get('phone'));
+        }
+        
+        // Set gender radio
+        const gender = urlParams.get('gender');
+        if (gender) {
+            const genderInput = form.querySelector(`input[name="gender"][value="${gender}"]`);
+            if (genderInput) genderInput.checked = true;
+        }
+        
+        // Set education select
+        form.education.value = urlParams.get('education') || '';
+        
+        // Handle profile image
+        const profileImage = urlParams.get('profileImage');
+        if (profileImage) {
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = `<img src="${profileImage}" alt="Profile Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
+        }
+    }
 });
             
