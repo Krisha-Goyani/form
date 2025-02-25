@@ -250,14 +250,15 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
 
 // Add image preview functionality
 document.getElementById('profileImage').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
+    const imagePreview = document.getElementById('imagePreview');
+    if (this.files && this.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const imagePreview = document.getElementById('imagePreview');
             imagePreview.innerHTML = `<img src="${e.target.result}" alt="Profile Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(this.files[0]);
+    } else {
+        imagePreview.innerHTML = ''; // Clear preview if no file selected
     }
 });
 
@@ -470,14 +471,35 @@ function updatePreviewCard() {
     }
 }
 
-// Update reset handler
-document.getElementById('userForm').addEventListener('reset', function() {
-    document.querySelectorAll('.valid, .invalid').forEach(element => {
-        element.classList.remove('valid', 'invalid');
-        delete element.dataset.touched; // Remove touched state
-    });
-    document.querySelector('.gender-group').classList.remove('valid', 'invalid');
-    delete document.querySelector('.gender-group').dataset.touched;
+// Add reset handler for the form
+document.getElementById('userForm').addEventListener('reset', function(e) {
+    // Reset image preview
+    const imagePreview = document.getElementById('imagePreview');
+    imagePreview.innerHTML = '';
+    
+    // Reset validation classes
+    const imageContainer = document.querySelector('.image-input-container');
+    imageContainer.classList.remove('valid', 'invalid');
+    
+    // Reset error message
+    const imageError = imageContainer.nextElementSibling;
+    if (imageError) {
+        imageError.textContent = '';
+    }
+    
+    // Clear localStorage
+    localStorage.removeItem('profileImageData');
+    localStorage.removeItem('profileImageName');
+
+    // Reset phone field validation
+    const phoneContainer = document.querySelector('.iti');
+    if (phoneContainer) {
+        phoneContainer.classList.remove('valid', 'invalid');
+        const phoneError = phoneContainer.querySelector('.error-text') || phoneContainer.nextElementSibling;
+        if (phoneError && phoneError.classList.contains('error-text')) {
+            phoneError.textContent = '';
+        }
+    }
 });
 
 // Add this at the beginning of the file
