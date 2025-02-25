@@ -55,7 +55,9 @@ function updatePreviewCard(card) {
                 <strong>Phone Number:</strong> 
                 <span class="field-value">${formData.phone || ''}</span>
                 <div class="edit-inline" style="display: none;">
-                    <input type="tel" placeholder="Phone" value="${formData.phone || ''}">
+                    <div class="phone-input-container">
+                        <input type="tel" id="editPhone" placeholder="Phone Number" value="${formData.phone || ''}">
+                    </div>
                 </div>
             </div>
         </div>
@@ -95,6 +97,22 @@ function updatePreviewCard(card) {
             </div>
         </div>
     `;
+
+    // Initialize phone input in edit mode
+    if (document.getElementById('editPhone')) {
+        window.intlTelInput(document.getElementById('editPhone'), {
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            separateDialCode: true,
+            initialCountry: "auto",
+            geoIpLookup: function(callback) {
+                fetch("https://ipapi.co/json")
+                    .then(res => res.json())
+                    .then(data => callback(data.country_code))
+                    .catch(() => callback("in"));
+            },
+            preferredCountries: ["in", "us", "gb", "ca"]
+        });
+    }
 }
 
 function toggleEdit(btn) {
@@ -103,14 +121,24 @@ function toggleEdit(btn) {
     
     Object.entries(formData).forEach(([key, value]) => {
         if (value) {
-            params.append(key, value);
+            if (key === 'phone') {
+                // Store the full phone number with country code
+                const phoneInput = document.querySelector('.iti__selected-flag');
+                const countryCode = phoneInput ? phoneInput.getAttribute('title') : '';
+                params.append('phoneNumber', value);
+                params.append('phoneCountry', countryCode);
+            } else {
+                params.append(key, value);
+            }
         }
     });
     
-    // Get the current profile image from the preview card
+    // Only store profile image if it exists and hasn't been deleted
     const profileImg = document.querySelector('.preview-card img');
-    if (profileImg && profileImg.src) {
+    if (profileImg && profileImg.src && !profileImg.style.display) {
         localStorage.setItem('profileImageData', profileImg.src);
+    } else {
+        localStorage.removeItem('profileImageData');
     }
     
     params.append('isEditing', 'true');
@@ -166,6 +194,14 @@ function attachDeleteEventListeners() {
         const checkedItems = document.querySelectorAll('.delete-item input[type="checkbox"]:checked');
         checkedItems.forEach(checkbox => {
             const field = checkbox.id.replace('Delete', '');
+            if (field === 'phone') {
+                formData.phone = '';
+                // Update preview card phone number
+                const phoneValue = document.querySelector('.preview-card [data-field="phone"] .field-value');
+                if (phoneValue) {
+                    phoneValue.textContent = '';
+                }
+            }
             // Handle profile image deletion separately
             if (field === 'image') {
                 formData.profileImage = '';

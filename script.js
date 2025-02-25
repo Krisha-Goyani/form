@@ -1,9 +1,14 @@
 const phoneInput = window.intlTelInput(document.querySelector("#phone"), {
     utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
     separateDialCode: true,
-    initialCountry: "in",
-    preferredCountries: ["in"],
-    geoIpLookup: null
+    initialCountry: "auto",
+    geoIpLookup: function(callback) {
+        fetch("https://ipapi.co/json")
+            .then(res => res.json())
+            .then(data => callback(data.country_code))
+            .catch(() => callback("in")); // Default to India if geolocation fails
+    },
+    preferredCountries: ["in",  "gb", "ca"]
 });
 
 // Add input event listener for real-time validation
@@ -19,6 +24,155 @@ document.getElementById('userForm').addEventListener('blur', function(e) {
     input.dataset.touched = 'true';
     validateField(input);
 }, true);
+
+// Add country-specific validation rules
+const countryPhoneRules = {
+    'af': { minLength: 9, maxLength: 9 },    // Afghanistan
+    'al': { minLength: 8, maxLength: 8 },    // Albania
+    'dz': { minLength: 9, maxLength: 9 },    // Algeria
+    'ad': { minLength: 6, maxLength: 6 },    // Andorra
+    'ao': { minLength: 9, maxLength: 9 },    // Angola
+    'ar': { minLength: 10, maxLength: 10 },  // Argentina
+    'am': { minLength: 8, maxLength: 8 },    // Armenia
+    'au': { minLength: 9, maxLength: 9 },    // Australia
+    'at': { minLength: 10, maxLength: 10 },  // Austria
+    'az': { minLength: 9, maxLength: 9 },    // Azerbaijan
+    'bh': { minLength: 8, maxLength: 8 },    // Bahrain
+    'bd': { minLength: 10, maxLength: 10 },  // Bangladesh
+    'by': { minLength: 9, maxLength: 9 },    // Belarus
+    'be': { minLength: 9, maxLength: 9 },    // Belgium
+    'br': { minLength: 10, maxLength: 10 },  // Brazil
+    'bg': { minLength: 9, maxLength: 9 },    // Bulgaria
+    'kh': { minLength: 9, maxLength: 9 },    // Cambodia
+    'ca': { minLength: 10, maxLength: 10 },  // Canada
+    'cl': { minLength: 9, maxLength: 9 },    // Chile
+    'cn': { minLength: 11, maxLength: 11 },  // China
+    'co': { minLength: 10, maxLength: 10 },  // Colombia
+    'hr': { minLength: 9, maxLength: 9 },    // Croatia
+    'cy': { minLength: 8, maxLength: 8 },    // Cyprus
+    'cz': { minLength: 9, maxLength: 9 },    // Czech Republic
+    'dk': { minLength: 8, maxLength: 8 },    // Denmark
+    'eg': { minLength: 10, maxLength: 10 },  // Egypt
+    'ee': { minLength: 7, maxLength: 7 },    // Estonia
+    'fi': { minLength: 9, maxLength: 9 },   // Finland
+    'fr': { minLength: 9, maxLength: 9 },    // France
+    'ge': { minLength: 9, maxLength: 9 },    // Georgia
+    'de': { minLength: 10, maxLength: 10 },  // Germany
+    'gr': { minLength: 10, maxLength: 10 },  // Greece
+    'hk': { minLength: 8, maxLength: 8 },    // Hong Kong
+    'hu': { minLength: 9, maxLength: 9 },    // Hungary
+    'is': { minLength: 7, maxLength: 7 },    // Iceland
+    'in': { minLength: 10, maxLength: 10 },  // India
+    'id': { minLength: 10, maxLength: 10 },  // Indonesia
+    'ir': { minLength: 10, maxLength: 10 },  // Iran
+    'iq': { minLength: 10, maxLength: 10 },  // Iraq
+    'ie': { minLength: 9, maxLength: 9 },    // Ireland
+    'il': { minLength: 9, maxLength: 9 },    // Israel
+    'it': { minLength: 9, maxLength: 9 },   // Italy
+    'jp': { minLength: 10, maxLength: 10 },  // Japan
+    'jo': { minLength: 9, maxLength: 9 },    // Jordan
+    'kz': { minLength: 10, maxLength: 10 },  // Kazakhstan
+    'ke': { minLength: 9, maxLength: 9 },    // Kenya
+    'kr': { minLength: 9, maxLength: 9 },   // South Korea
+    'kw': { minLength: 8, maxLength: 8 },    // Kuwait
+    'lv': { minLength: 8, maxLength: 8 },    // Latvia
+    'lb': { minLength: 7, maxLength: 7 },    // Lebanon
+    'ly': { minLength: 9, maxLength: 9 },    // Libya
+    'lt': { minLength: 8, maxLength: 8 },    // Lithuania
+    'lu': { minLength: 9, maxLength: 9 },    // Luxembourg
+    'my': { minLength: 9, maxLength: 9 },   // Malaysia
+    'mt': { minLength: 8, maxLength: 8 },    // Malta
+    'mx': { minLength: 10, maxLength: 10 },  // Mexico
+    'ma': { minLength: 9, maxLength: 9 },    // Morocco
+    'nl': { minLength: 9, maxLength: 9 },    // Netherlands
+    'nz': { minLength: 8, maxLength: 8 },   // New Zealand
+    'ng': { minLength: 10, maxLength: 10 },  // Nigeria
+    'no': { minLength: 8, maxLength: 8 },    // Norway
+    'om': { minLength: 8, maxLength: 8 },    // Oman
+    'pk': { minLength: 10, maxLength: 10 },  // Pakistan
+    'pa': { minLength: 8, maxLength: 8 },    // Panama
+    'pe': { minLength: 9, maxLength: 9 },    // Peru
+    'ph': { minLength: 10, maxLength: 10 },  // Philippines
+    'pl': { minLength: 9, maxLength: 9 },    // Poland
+    'pt': { minLength: 9, maxLength: 9 },    // Portugal
+    'qa': { minLength: 8, maxLength: 8 },    // Qatar
+    'ro': { minLength: 9, maxLength: 9 },    // Romania
+    'ru': { minLength: 10, maxLength: 10 },  // Russia
+    'sa': { minLength: 9, maxLength: 9 },    // Saudi Arabia
+    'sg': { minLength: 8, maxLength: 8 },    // Singapore
+    'sk': { minLength: 9, maxLength: 9 },    // Slovakia
+    'si': { minLength: 8, maxLength: 8 },    // Slovenia
+    'za': { minLength: 9, maxLength: 9 },    // South Africa
+    'es': { minLength: 9, maxLength: 9 },    // Spain
+    'se': { minLength: 9, maxLength: 9 },    // Sweden
+    'ch': { minLength: 9, maxLength: 9 },    // Switzerland
+    'tw': { minLength: 9, maxLength: 9 },    // Taiwan
+    'th': { minLength: 9, maxLength: 9 },    // Thailand
+    'tn': { minLength: 8, maxLength: 8 },    // Tunisia
+    'tr': { minLength: 10, maxLength: 10 },  // Turkey
+    'ua': { minLength: 9, maxLength: 9 },    // Ukraine
+    'ae': { minLength: 9, maxLength: 9 },    // United Arab Emirates
+    'gb': { minLength: 10, maxLength: 10 },  // United Kingdom
+    'us': { minLength: 10, maxLength: 10 },  // United States
+    'uy': { minLength: 8, maxLength: 8 },    // Uruguay
+    'uz': { minLength: 9, maxLength: 9 },    // Uzbekistan
+    've': { minLength: 10, maxLength: 10 },  // Venezuela
+    'vn': { minLength: 9, maxLength: 9 },   // Vietnam
+    'ye': { minLength: 9, maxLength: 9 },    // Yemen
+    'zw': { minLength: 9, maxLength: 9 },    // Zimbabwe
+};
+
+// Add this object at the top of your file with other constants
+const countryStartDigits = {
+    'af': ['7'], // Afghanistan
+    'al': ['6'], // Albania
+    'dz': ['5', '6', '7'], // Algeria
+    'ar': ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Argentina
+    'au': ['4'], // Australia
+    'at': ['6'], // Austria
+    'be': ['4'], // Belgium
+    'bi': ['7'], // Burundi
+    'br': ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Brazil
+    'bg': ['8', '9'], // Bulgaria
+    'ca': ['2', '3', '4', '5', '6', '7', '8', '9'], // Canada
+    'cn': ['1', '3', '5', '6', '7', '8', '9'], // China
+    'dk': ['2', '3', '4', '5', '6', '7', '8', '9'], // Denmark
+    'eg': ['1', '2'], // Egypt
+    'fr': ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // France
+    'de': ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Germany
+    'gr': ['6', '7'], // Greece
+    'hk': ['5', '6', '9'], // Hong Kong
+    'in': ['6', '7', '8', '9'], // India
+    'id': ['8'], // Indonesia
+    'ie': ['8'], // Ireland
+    'il': ['5'], // Israel
+    'it': ['3'], // Italy
+    'jp': ['7', '8', '9'], // Japan
+    'my': ['1', '3', '4', '5', '6', '7', '8', '9'], // Malaysia
+    'mx': ['1', '2', '3', '4', '5', '6', '7', '8', '9'], // Mexico
+    'nl': ['6'], // Netherlands
+    'nz': ['2'], // New Zealand
+    'no': ['4', '9'], // Norway
+    'pk': ['3'], // Pakistan
+    'ph': ['9'], // Philippines
+    'pl': ['5', '6', '7', '8', '9'], // Poland
+    'pt': ['9'], // Portugal
+    'ru': ['9'], // Russia
+    'sa': ['5'], // Saudi Arabia
+    'sg': ['8', '9'], // Singapore
+    'za': ['6', '7', '8'], // South Africa
+    'kr': ['1'], // South Korea
+    'es': ['6', '7'], // Spain
+    'se': ['7'], // Sweden
+    'ch': ['7', '8', '9'], // Switzerland
+    'tw': ['9'], // Taiwan
+    'th': ['6', '8', '9'], // Thailand
+    'tr': ['5'], // Turkey
+    'ae': ['5'], // UAE
+    'gb': ['7'], // United Kingdom
+    'us': ['2', '3', '4', '5', '6', '7', '8', '9'], // United States
+    'vn': ['3', '5', '7', '8', '9'], // Vietnam
+};
 
 function validateField(input) {
     let isValid = true;
@@ -61,8 +215,58 @@ function validateField(input) {
             }
             break;
         case 'phone':
-            isValid = phoneInput.isValidNumber();
-            errorMessage = 'Please enter a valid phone number';
+            const phoneNumber = input.value.replace(/\D/g, ''); // Remove non-digits
+            const selectedCountry = phoneInput.getSelectedCountryData().iso2;
+            const countryRules = countryPhoneRules[selectedCountry] || { minLength: 4, maxLength: 15 };
+            const validStartDigits = countryStartDigits[selectedCountry];
+
+            if (!input.value.trim()) {
+                isValid = false;
+                errorMessage = 'Phone number is required';
+            } else if (!/^\d+$/.test(phoneNumber)) {
+                isValid = false;
+                errorMessage = 'Only numbers (0-9) are allowed';
+            } else if (validStartDigits) {
+                // Get the first digit of the actual phone number (excluding country code)
+                const numberWithoutCode = phoneNumber.slice(-countryRules.minLength);
+                const firstDigit = numberWithoutCode.charAt(0);
+                
+                if (!validStartDigits.includes(firstDigit)) {
+                    isValid = false;
+                    errorMessage = `Numbers for ${phoneInput.getSelectedCountryData().name} must start with ${validStartDigits.join(' or ')}`;
+                } else if (phoneNumber.length < countryRules.minLength || phoneNumber.length > countryRules.maxLength) {
+                    isValid = false;
+                    errorMessage = `Phone number must be ${countryRules.minLength} digits for ${phoneInput.getSelectedCountryData().name}`;
+                    if (countryRules.minLength !== countryRules.maxLength) {
+                        errorMessage = `Phone number must be between ${countryRules.minLength} and ${countryRules.maxLength} digits for ${phoneInput.getSelectedCountryData().name}`;
+                    }
+                } else if (!phoneInput.isValidNumber()) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid phone number';
+                }
+            } else if (phoneNumber.length < countryRules.minLength || phoneNumber.length > countryRules.maxLength) {
+                isValid = false;
+                errorMessage = `Phone number must be ${countryRules.minLength} digits for ${phoneInput.getSelectedCountryData().name}`;
+                if (countryRules.minLength !== countryRules.maxLength) {
+                    errorMessage = `Phone number must be between ${countryRules.minLength} and ${countryRules.maxLength} digits for ${phoneInput.getSelectedCountryData().name}`;
+                }
+            } else if (!phoneInput.isValidNumber()) {
+                isValid = false;
+                errorMessage = 'Please enter a valid phone number';
+            }
+            
+            // Update validation classes for phone input container
+            const phoneContainer = input.closest('.iti');
+            if (phoneContainer) {
+                phoneContainer.classList.toggle('valid', isValid && input.value.length > 0);
+                phoneContainer.classList.toggle('invalid', !isValid && input.value.length > 0);
+                
+                // Show error message
+                const errorElement = phoneContainer.nextElementSibling;
+                if (errorElement && errorElement.classList.contains('error-text')) {
+                    errorElement.textContent = (!isValid && input.value.length > 0) ? errorMessage : '';
+                }
+            }
             break;
         case 'gender':
             const genderGroup = document.querySelector('.gender-group');
@@ -407,41 +611,59 @@ function editForm(card) {
     document.getElementById('formContainer').style.display = 'block';
     document.getElementById('previewDeleteContainer').style.display = 'none';
 
-    // Populate form with existing data
+    // Clear any existing validation states
     const form = document.getElementById('userForm');
-    const dataElements = card.querySelectorAll('p');
-    
-    dataElements.forEach(element => {
-        const text = element.textContent;
-        const [field, value] = text.split(':').map(str => str.trim());
-        
-        switch(field.toLowerCase()) {
-            case 'name':
-                const [firstName, lastName] = value.split(' ');
-                form.firstName.value = firstName;
-                form.lastName.value = lastName;
-                break;
-            case 'email':
-                form.email.value = value;
-                break;
-            case 'phone':
-                phoneInput.setNumber(value);
-                break;
-            case 'gender':
-                form.querySelector(`input[value="${value}"]`).checked = true;
-                break;
-            case 'education':
-                form.education.value = value;
-                break;
-        }
+    form.querySelectorAll('.valid, .invalid').forEach(el => {
+        el.classList.remove('valid', 'invalid');
     });
-
+    
+    // Remove validation classes from containers
+    document.querySelector('.iti')?.classList.remove('valid', 'invalid');
+    document.querySelector('.gender-group')?.classList.remove('valid', 'invalid');
+    document.querySelector('.image-input-container')?.classList.remove('valid', 'invalid');
+    
     // Handle profile image
-    const profileImg = card.querySelector('img');
-    if (profileImg) {
-        const imgPreview = document.getElementById('imagePreview');
-        imgPreview.innerHTML = `<img src="${profileImg.src}" alt="Profile Preview" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">`;
+    const profileImg = card.querySelector('img:not([style*="display: none"])');
+    const imagePreview = document.getElementById('imagePreview');
+    const imageContainer = document.querySelector('.image-input-container');
+    
+    // Clear the image preview first
+    imagePreview.innerHTML = '';
+    
+    // Reset image container styles
+    if (imageContainer) {
+        imageContainer.classList.remove('valid', 'invalid');
+        imageContainer.style.border = '1px solid #ccc';
     }
+    
+    if (profileImg && !profileImg.style.display) {
+        imagePreview.innerHTML = `<img src="${profileImg.src}" alt="Profile Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
+        
+        let existingImageInput = document.querySelector('input[name="existingProfileImage"]');
+        if (!existingImageInput) {
+            existingImageInput = document.createElement('input');
+            existingImageInput.type = 'hidden';
+            existingImageInput.name = 'existingProfileImage';
+            form.appendChild(existingImageInput);
+        }
+        existingImageInput.value = profileImg.src;
+    } else {
+        // Clear any existing image input value
+        const existingImageInput = document.querySelector('input[name="existingProfileImage"]');
+        if (existingImageInput) {
+            existingImageInput.value = '';
+        }
+        // Clear the file input
+        const fileInput = document.getElementById('profileImage');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    }
+
+    // Clear any error messages
+    form.querySelectorAll('.error-text').forEach(error => {
+        error.textContent = '';
+    });
 }
 
 function updatePreviewCard() {
@@ -559,15 +781,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     fileInput.files = dataTransfer.files;
                 });
             
-            // Mark image as valid
+            // Remove validation classes from image container
             const imageContainer = document.querySelector('.image-input-container');
-            imageContainer.classList.add('valid');
-            imageContainer.classList.remove('invalid');
-            const imageError = imageContainer.nextElementSibling;
-            if (imageError) {
-                imageError.textContent = '';
+            if (imageContainer) {
+                imageContainer.classList.remove('valid', 'invalid');
             }
         }
     }
 });
+
+// Add input event listener to allow only numbers
+document.querySelector("#phone").addEventListener("input", function(e) {
+    let cursorPosition = this.selectionStart;
+    this.value = this.value.replace(/[^\d]/g, ''); // Remove non-digits
+    this.setSelectionRange(cursorPosition, cursorPosition);
+    validateField(this);
+});
+
+// Add country change event listener
+document.querySelector("#phone").addEventListener("countrychange", function() {
+    this.value = ''; // Clear the input when country changes
+    validateField(this);
+});
+
+// Add this after phoneInput initialization
+// Check if we're in edit mode and set the phone number
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('isEditing') === 'true') {
+    const phoneNumber = urlParams.get('phoneNumber');
+    if (phoneNumber) {
+        setTimeout(() => {
+            phoneInput.setNumber(phoneNumber);
+            // Remove validation classes
+            const input = document.querySelector('#phone');
+            if (input) {
+                input.classList.remove('valid', 'invalid');
+            }
+            const container = document.querySelector('.iti');
+            if (container) {
+                container.classList.remove('valid', 'invalid');
+            }
+        }, 500);
+    }
+}
             

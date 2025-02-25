@@ -257,3 +257,15 @@ body {
     border: 2px solid #dc3545;
     border-radius: 4px;
 }
+
+.image-input-container {
+    border: 1px solid #ccc !important;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Only show validation borders when explicitly validating */
+.image-input-container.valid,
+.image-input-container.invalid {
+    border-width: 2px !important;
+}
