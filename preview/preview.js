@@ -98,20 +98,22 @@ function updatePreviewCard(card) {
 }
 
 function toggleEdit(btn) {
-    // Get the current form data
+    // Store current form data
     const params = new URLSearchParams();
     
-    // Add all form data to URL parameters
     Object.entries(formData).forEach(([key, value]) => {
         if (value) {
             params.append(key, value);
         }
     });
     
-    // Add an edit flag to indicate we're in edit mode
-    params.append('isEditing', 'true');
+    // Get the current profile image from the preview card
+    const profileImg = document.querySelector('.preview-card img');
+    if (profileImg && profileImg.src) {
+        localStorage.setItem('profileImageData', profileImg.src);
+    }
     
-    // Redirect back to the form page with the data
+    params.append('isEditing', 'true');
     window.location.href = '../index.html?' + params.toString();
 }
 
