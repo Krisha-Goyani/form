@@ -536,6 +536,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const imagePreview = document.getElementById('imagePreview');
             imagePreview.innerHTML = `<img src="${profileImage}" alt="Profile Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
         }
+
+        const storedImage = localStorage.getItem('profileImageData');
+        if (storedImage) {
+            // Update the preview
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = `<img src="${storedImage}" alt="Profile Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
+            
+            // Create a File object from the stored image
+            fetch(storedImage)
+                .then(res => res.blob())
+                .then(blob => {
+                    const fileName = 'profile-image' + (blob.type ? '.' + blob.type.split('/')[1] : '.jpg');
+                    const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+                    
+                    // Create a DataTransfer object to set the file input
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    
+                    // Set the file input's files
+                    const fileInput = document.getElementById('profileImage');
+                    fileInput.files = dataTransfer.files;
+                });
+            
+            // Mark image as valid
+            const imageContainer = document.querySelector('.image-input-container');
+            imageContainer.classList.add('valid');
+            imageContainer.classList.remove('invalid');
+            const imageError = imageContainer.nextElementSibling;
+            if (imageError) {
+                imageError.textContent = '';
+            }
+        }
     }
 });
             
