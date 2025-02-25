@@ -32,8 +32,10 @@ function validateField(input) {
             errorMessage = 'Only characters allowed from a-z and A-Z';
             break;
         case 'email':
-            // More comprehensive email validation
-            const emailRegex = /^(?=[a-zA-Z0-9@._%+-]{6,254}$)[a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]{1,63}\.){1,8}[a-zA-Z]{2,63}$/;
+            const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            const domainEndRegex = /^[^@]+@[^@]+\.(com|org|net|edu|co|in)$/i;
+            const localPartLengthRegex = /^[^@]{1,30}@/;
+            const domainPartLengthRegex = /@[^.]{1,10}\./;
             
             if (input.value.trim() === '') {
                 isValid = false;
@@ -44,6 +46,15 @@ function validateField(input) {
             } else if (!input.value.includes('.')) {
                 isValid = false;
                 errorMessage = 'Email must contain a valid domain';
+            } else if (!localPartLengthRegex.test(input.value.trim())) {
+                isValid = false;
+                errorMessage = 'Email address cannot exceed 30 characters before @';
+            } else if (!domainPartLengthRegex.test(input.value.trim())) {
+                isValid = false;
+                errorMessage = 'Domain name cannot exceed 10 characters';
+            } else if (!domainEndRegex.test(input.value.trim())) {
+                isValid = false;
+                errorMessage = 'Invalid domain. Email must end with .com, .org, .net, .edu, .co, or .in';
             } else if (!emailRegex.test(input.value.trim())) {
                 isValid = false;
                 errorMessage = 'Please enter a valid email address (e.g., example@domain.com)';
