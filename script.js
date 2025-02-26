@@ -8,7 +8,7 @@ const phoneInput = window.intlTelInput(document.querySelector("#phone"), {
             .then(data => callback(data.country_code))
             .catch(() => callback("in")); // Default to India if geolocation fails
     },
-    preferredCountries: ["in",  "gb", "ca"]
+    preferredCountries: ["in",  "gb"]
 });
 
 // Add input event listener for real-time validation
@@ -178,62 +178,82 @@ function validateField(input) {
     let isValid = true;
     let errorMessage = '';
 
-    switch(input.name) {
-        case 'firstName':
-        case 'lastName':
-            const nameRegex = /^[a-zA-Z]+$/;
-            isValid = nameRegex.test(input.value.trim());
-            errorMessage = 'Only characters allowed from a-z and A-Z';
-            break;
-        case 'email':
-            const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-            const domainEndRegex = /^[^@]+@[^@]+\.(com|org|net|edu|co|in)$/i;
-            const localPartLengthRegex = /^[^@]{1,30}@/;
-            const domainPartLengthRegex = /@[^.]{1,10}\./;
-            
-            if (input.value.trim() === '') {
-                isValid = false;
-                errorMessage = 'Email address is required';
-            } else if (!input.value.includes('@')) {
-                isValid = false;
-                errorMessage = 'Email must contain @ symbol';
-            } else if (!input.value.includes('.')) {
-                isValid = false;
-                errorMessage = 'Email must contain a valid domain';
-            } else if (!localPartLengthRegex.test(input.value.trim())) {
-                isValid = false;
-                errorMessage = 'Email address cannot exceed 30 characters before @';
-            } else if (!domainPartLengthRegex.test(input.value.trim())) {
-                isValid = false;
-                errorMessage = 'Domain name cannot exceed 10 characters';
-            } else if (!domainEndRegex.test(input.value.trim())) {
-                isValid = false;
-                errorMessage = 'Invalid domain. Email must end with .com, .org, .net, .edu, .co, or .in';
-            } else if (!emailRegex.test(input.value.trim())) {
-                isValid = false;
-                errorMessage = 'Please enter a valid email address (e.g., example@domain.com)';
-            }
-            break;
-        case 'phone':
-            const phoneNumber = input.value.replace(/\D/g, ''); // Remove non-digits
-            const selectedCountry = phoneInput.getSelectedCountryData().iso2;
-            const countryRules = countryPhoneRules[selectedCountry] || { minLength: 4, maxLength: 15 };
-            const validStartDigits = countryStartDigits[selectedCountry];
+    // Check for empty required fields first
+    if (input.hasAttribute('required') || input.dataset.touched === 'true') {
+        if (!input.value.trim() && input.type !== 'file') {  // Skip empty check for file inputs
+            isValid = false;
+            errorMessage = `${input.name.charAt(0).toUpperCase() + input.name.slice(1)} is required`;
+        }
+    }
 
-            if (!input.value.trim()) {
-                isValid = false;
-                errorMessage = 'Phone number is required';
-            } else if (!/^\d+$/.test(phoneNumber)) {
-                isValid = false;
-                errorMessage = 'Only numbers (0-9) are allowed';
-            } else if (validStartDigits) {
-                // Get the first digit of the actual phone number (excluding country code)
-                const numberWithoutCode = phoneNumber.slice(-countryRules.minLength);
-                const firstDigit = numberWithoutCode.charAt(0);
+    // Only proceed with specific validation if the field is not empty
+    if (input.value.trim() || input.type === 'file') {  // Modified condition to handle file inputs
+        switch(input.name) {
+            case 'firstName':
+            case 'lastName':
+                const nameRegex = /^[a-zA-Z]+$/;
+                isValid = nameRegex.test(input.value.trim());
+                errorMessage = 'Only characters allowed from a-z and A-Z';
+                break;
+            case 'email':
+                const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                const domainEndRegex = /^[^@]+@[^@]+\.(com|org|net|edu|co|in)$/i;
+                const localPartLengthRegex = /^[^@]{1,30}@/;
+                const domainPartLengthRegex = /@[^.]{1,10}\./;
                 
-                if (!validStartDigits.includes(firstDigit)) {
+                if (input.value.trim() === '') {
                     isValid = false;
-                    errorMessage = `Numbers for ${phoneInput.getSelectedCountryData().name} must start with ${validStartDigits.join(' or ')}`;
+                    errorMessage = 'Email address is required';
+                } else if (!input.value.includes('@')) {
+                    isValid = false;
+                    errorMessage = 'Email must contain @ symbol';
+                } else if (!input.value.includes('.')) {
+                    isValid = false;
+                    errorMessage = 'Email must contain a valid domain';
+                } else if (!localPartLengthRegex.test(input.value.trim())) {
+                    isValid = false;
+                    errorMessage = 'Email address cannot exceed 30 characters before @';
+                } else if (!domainPartLengthRegex.test(input.value.trim())) {
+                    isValid = false;
+                    errorMessage = 'Domain name cannot exceed 10 characters';
+                } else if (!domainEndRegex.test(input.value.trim())) {
+                    isValid = false;
+                    errorMessage = 'Invalid domain. Email must end with .com, .org, .net, .edu, .co, or .in';
+                } else if (!emailRegex.test(input.value.trim())) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid email address (e.g., example@domain.com)';
+                }
+                break;
+            case 'phone':
+                const phoneNumber = input.value.replace(/\D/g, ''); // Remove non-digits
+                const selectedCountry = phoneInput.getSelectedCountryData().iso2;
+                const countryRules = countryPhoneRules[selectedCountry] || { minLength: 4, maxLength: 15 };
+                const validStartDigits = countryStartDigits[selectedCountry];
+
+                if (!input.value.trim()) {
+                    isValid = false;
+                    errorMessage = 'Phone number is required';
+                } else if (!/^\d+$/.test(phoneNumber)) {
+                    isValid = false;
+                    errorMessage = 'Only numbers (0-9) are allowed';
+                } else if (validStartDigits) {
+                    // Get the first digit of the actual phone number (excluding country code)
+                    const numberWithoutCode = phoneNumber.slice(-countryRules.minLength);
+                    const firstDigit = numberWithoutCode.charAt(0);
+                    
+                    if (!validStartDigits.includes(firstDigit)) {
+                        isValid = false;
+                        errorMessage = `Numbers for ${phoneInput.getSelectedCountryData().name} must start with ${validStartDigits.join(' or ')}`;
+                    } else if (phoneNumber.length < countryRules.minLength || phoneNumber.length > countryRules.maxLength) {
+                        isValid = false;
+                        errorMessage = `Phone number must be ${countryRules.minLength} digits for ${phoneInput.getSelectedCountryData().name}`;
+                        if (countryRules.minLength !== countryRules.maxLength) {
+                            errorMessage = `Phone number must be between ${countryRules.minLength} and ${countryRules.maxLength} digits for ${phoneInput.getSelectedCountryData().name}`;
+                        }
+                    } else if (!phoneInput.isValidNumber()) {
+                        isValid = false;
+                        errorMessage = 'Please enter a valid phone number';
+                    }
                 } else if (phoneNumber.length < countryRules.minLength || phoneNumber.length > countryRules.maxLength) {
                     isValid = false;
                     errorMessage = `Phone number must be ${countryRules.minLength} digits for ${phoneInput.getSelectedCountryData().name}`;
@@ -244,74 +264,76 @@ function validateField(input) {
                     isValid = false;
                     errorMessage = 'Please enter a valid phone number';
                 }
-            } else if (phoneNumber.length < countryRules.minLength || phoneNumber.length > countryRules.maxLength) {
-                isValid = false;
-                errorMessage = `Phone number must be ${countryRules.minLength} digits for ${phoneInput.getSelectedCountryData().name}`;
-                if (countryRules.minLength !== countryRules.maxLength) {
-                    errorMessage = `Phone number must be between ${countryRules.minLength} and ${countryRules.maxLength} digits for ${phoneInput.getSelectedCountryData().name}`;
-                }
-            } else if (!phoneInput.isValidNumber()) {
-                isValid = false;
-                errorMessage = 'Please enter a valid phone number';
-            }
-            
-            // Update validation classes for phone input container
-            const phoneContainer = input.closest('.iti');
-            if (phoneContainer) {
-                phoneContainer.classList.toggle('valid', isValid && input.value.length > 0);
-                phoneContainer.classList.toggle('invalid', !isValid && input.value.length > 0);
                 
-                // Show error message
-                const errorElement = phoneContainer.nextElementSibling;
-                if (errorElement && errorElement.classList.contains('error-text')) {
-                    errorElement.textContent = (!isValid && input.value.length > 0) ? errorMessage : '';
+                // Update validation classes for phone input container
+                const phoneContainer = input.closest('.iti');
+                if (phoneContainer) {
+                    phoneContainer.classList.toggle('valid', isValid && input.value.length > 0);
+                    phoneContainer.classList.toggle('invalid', !isValid && input.value.length > 0);
+                    
+                    // Show error message
+                    const errorElement = phoneContainer.nextElementSibling;
+                    if (errorElement && errorElement.classList.contains('error-text')) {
+                        errorElement.textContent = (!isValid && input.value.length > 0) ? errorMessage : '';
+                    }
                 }
-            }
-            break;
-        case 'gender':
-            const genderGroup = document.querySelector('.gender-group');
-            isValid = document.querySelector('input[name="gender"]:checked');
-            errorMessage = 'Please select a gender';
-            if (input.closest('.gender-group')) {
-                genderGroup.classList.toggle('valid', isValid);
-                genderGroup.classList.toggle('invalid', !isValid);
-                const errorElement = genderGroup.nextElementSibling;
-                if (errorElement && errorElement.classList.contains('error-text')) {
-                    errorElement.textContent = isValid ? '' : errorMessage;
+                break;
+            case 'gender':
+                const genderGroup = document.querySelector('.gender-group');
+                isValid = document.querySelector('input[name="gender"]:checked');
+                errorMessage = 'Please select a gender';
+                if (input.closest('.gender-group')) {
+                    genderGroup.classList.toggle('valid', isValid);
+                    genderGroup.classList.toggle('invalid', !isValid);
+                    const errorElement = genderGroup.nextElementSibling;
+                    if (errorElement && errorElement.classList.contains('error-text')) {
+                        errorElement.textContent = isValid ? '' : errorMessage;
+                    }
                 }
-            }
-            return isValid;
-        case 'education':
-            isValid = input.value !== '' && input.value !== 'Select Degree';
-            errorMessage = 'You have to choose one field';
-            input.classList.toggle('valid', isValid);
-            input.classList.toggle('invalid', !isValid);
-            const educationError = input.nextElementSibling;
-            if (educationError && educationError.classList.contains('error-text')) {
-                educationError.textContent = !isValid ? errorMessage : '';
-            }
-            return isValid;
-        case 'profileImage':
-            isValid = input.files.length > 0;
-            errorMessage = 'Please select a profile image';
-            const imageContainer = input.closest('.image-input-container');
-            imageContainer.classList.toggle('valid', isValid);
-            imageContainer.classList.toggle('invalid', !isValid);
-            const imageError = imageContainer.nextElementSibling;
-            if (imageError && imageError.classList.contains('error-text')) {
-                imageError.textContent = !isValid ? errorMessage : '';
-            }
-            return isValid;
+                return isValid;
+            case 'education':
+                isValid = input.value !== '' && input.value !== 'Select Degree';
+                errorMessage = 'You have to choose one field';
+                input.classList.toggle('valid', isValid);
+                input.classList.toggle('invalid', !isValid);
+                const educationError = input.nextElementSibling;
+                if (educationError && educationError.classList.contains('error-text')) {
+                    educationError.textContent = !isValid ? errorMessage : '';
+                }
+                return isValid;
+            case 'profileImage':
+                isValid = input.files.length > 0;
+                errorMessage = 'Please select a profile image';
+                const imageContainer = input.closest('.image-input-container');
+                
+                if (isValid) {
+                    // Remove invalid class if valid
+                    imageContainer.classList.remove('invalid');
+                    imageContainer.classList.add('valid');
+                } else {
+                    // Only show invalid state if the field has been touched
+                    if (input.dataset.touched === 'true') {
+                        imageContainer.classList.remove('valid');
+                        imageContainer.classList.add('invalid');
+                    }
+                }
+                
+                const imageError = imageContainer.nextElementSibling;
+                if (imageError && imageError.classList.contains('error-text')) {
+                    imageError.textContent = (input.dataset.touched === 'true' && !isValid) ? errorMessage : '';
+                }
+                return isValid;
+        }
     }
 
     // Update visual feedback
     input.classList.toggle('valid', isValid && input.value.length > 0);
-    input.classList.toggle('invalid', !isValid && input.value.length > 0);
+    input.classList.toggle('invalid', !isValid);
     
     // Show error message
     const errorElement = input.nextElementSibling;
     if (errorElement && errorElement.classList.contains('error-text')) {
-        errorElement.textContent = (!isValid && input.value.length > 0) ? errorMessage : '';
+        errorElement.textContent = !isValid ? errorMessage : '';
     }
 
     return isValid;
@@ -401,9 +423,11 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
     const fields = ['firstName', 'lastName', 'email', 'phone', 'gender', 'education', 'profileImage'];
     let isValid = true;
 
+    // Mark all fields as touched before validation
     fields.forEach(field => {
         const input = document.querySelector(`[name="${field}"]`);
         if (input) {
+            input.dataset.touched = 'true';
             if (!validateField(input)) {
                 isValid = false;
             }
@@ -452,17 +476,31 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
     }
 });
 
-// Add image preview functionality
+// Modify the image preview functionality to handle validation
 document.getElementById('profileImage').addEventListener('change', function(e) {
     const imagePreview = document.getElementById('imagePreview');
+    const imageContainer = this.closest('.image-input-container');
+    
+    // Mark as touched when user interacts with the input
+    this.dataset.touched = 'true';
+    
     if (this.files && this.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             imagePreview.innerHTML = `<img src="${e.target.result}" alt="Profile Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
+            // Add valid class and remove invalid class
+            imageContainer.classList.remove('invalid');
+            imageContainer.classList.add('valid');
+            // Clear error message
+            const errorElement = imageContainer.nextElementSibling;
+            if (errorElement && errorElement.classList.contains('error-text')) {
+                errorElement.textContent = '';
+            }
         };
         reader.readAsDataURL(this.files[0]);
     } else {
         imagePreview.innerHTML = ''; // Clear preview if no file selected
+        validateField(this); // Revalidate the field
     }
 });
 
